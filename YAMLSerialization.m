@@ -246,12 +246,20 @@ __YAMLSerializationAddObject (yaml_document_t *document, id value) {
     }
     else {
         NSString *string = nil;
+        yaml_scalar_style_t scalarType = YAML_PLAIN_SCALAR_STYLE;
+
         if ([value isKindOfClass: [NSString class]]) {
             string = value;
+            // Quote NSStrings that contain only digits
+            NSCharacterSet *digits = [NSCharacterSet decimalDigitCharacterSet];
+            NSCharacterSet *chars = [NSCharacterSet characterSetWithCharactersInString:string];
+            if ([digits isSupersetOfSet:chars]) {
+                scalarType = YAML_SINGLE_QUOTED_SCALAR_STYLE;
+            }
         } else {
             string = [value stringValue];
         }
-        result = yaml_document_add_scalar(document, NULL, (yaml_char_t *)[string UTF8String], (int) [string length], YAML_PLAIN_SCALAR_STYLE);
+        result = yaml_document_add_scalar(document, NULL, (yaml_char_t *)[string UTF8String], (int) [string length], scalarType);
     }
     return (int) result;
 }
