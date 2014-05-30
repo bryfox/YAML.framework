@@ -250,10 +250,14 @@ __YAMLSerializationAddObject (yaml_document_t *document, id value) {
 
         if ([value isKindOfClass: [NSString class]]) {
             string = value;
-            // Quote NSStrings that contain only digits
-            NSCharacterSet *digits = [NSCharacterSet decimalDigitCharacterSet];
-            NSCharacterSet *chars = [NSCharacterSet characterSetWithCharactersInString:string];
-            if ([digits isSupersetOfSet:chars]) {
+            // Quote NSStrings that contain only digits, with optional leading "+"
+            // e.g., for phone numbers formatted with country code "+12125551212"
+            NSError *error = NULL;
+            NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"^\\+?[0-9]+$"
+                                                                                   options:NSRegularExpressionAnchorsMatchLines
+                                                                                     error:&error];
+            BOOL looksNumeric = !error && [regex numberOfMatchesInString:string options:NSMatchingAnchored range:NSMakeRange(0, [string length])] == 1;
+            if (looksNumeric) {
                 scalarType = YAML_SINGLE_QUOTED_SCALAR_STYLE;
             }
         } else {
